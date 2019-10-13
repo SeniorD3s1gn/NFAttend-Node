@@ -21,14 +21,14 @@ admin.initializeApp({
 });
 
 const firebaseConfig = {
-    apiKey: FIREBASE_KEY,
+    apiKey: "AIzaSyBUfVRDLorCtvZ4n7batfQVH0tSgwtergk",
     authDomain: "nfattend.firebaseapp.com",
     databaseURL: "https://nfattend.firebaseio.com",
     projectId: "nfattend",
     storageBucket: "nfattend.appspot.com",
     messagingSenderId: "550278693891",
-    appId: APP_ID,
-    measurementId: "G-T2PRS4T34V"
+    appId: "1:550278693891:web:7df6a57b0c7a642a513a36",
+    measurementId: "G-JM5X97JKT8"
 };
 
 firebase.initializeApp(firebaseConfig);
