@@ -1,4 +1,3 @@
-const fs = require('fs');
 const cors = require('cors');
 const express = require('express');
 const admin = require('firebase-admin');
@@ -13,6 +12,8 @@ const functions = require('firebase-functions');
 // https://firebase.google.com/docs/functions/write-firebase-functions
 
 const KEY = env.apiKey;
+const FIREBASE_KEY = env.firebaseApiKey;
+const APP_ID = env.appId;
 
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccountKey),
@@ -20,13 +21,13 @@ admin.initializeApp({
 });
 
 const firebaseConfig = {
-    apiKey: "AIzaSyBUfVRDLorCtvZ4n7batfQVH0tSgwtergk",
+    apiKey: FIREBASE_KEY,
     authDomain: "nfattend.firebaseapp.com",
     databaseURL: "https://nfattend.firebaseio.com",
     projectId: "nfattend",
     storageBucket: "nfattend.appspot.com",
     messagingSenderId: "550278693891",
-    appId: "1:550278693891:web:4859836c0d404cb7513a36",
+    appId: APP_ID,
     measurementId: "G-T2PRS4T34V"
 };
 
