@@ -19,15 +19,8 @@ router.post('/', (req, res) => {
     }).catch((err) => {
         const errorCode = err.code;
         const errorMessage = err.message;
-        if (errorCode === 'auth/wrong-password') {
-            console.log('Wrong password.');
-            res.sendStatus(401);
-        } else {
-            console.log(errorMessage);
-            res.sendStatus(401);
-        }
-        console.log(error);
-        res.sendStatus(401);
+        console.log('Error: ', err);
+        res.send({ errorCode, errorMessage });
     })
 });
 

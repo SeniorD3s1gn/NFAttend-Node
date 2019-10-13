@@ -105,3 +105,4 @@ public
 
 # Firebase
 service-account-key.json
+.firebase/
