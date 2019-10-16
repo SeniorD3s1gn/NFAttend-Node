@@ -30,7 +30,7 @@ router.get('/:email', (req, res) => {
     }
     admin.auth().getUserByEmail(req.params.email).then((record) => {
         console.log('Successfully fetched user data: ', record.toJSON());
-        res.send(200);
+        res.sendStatus(200);
     }).catch((err) => {
         console.log('Error fetching user data: ', err);
         res.sendStatus(404);

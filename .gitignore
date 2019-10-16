@@ -106,3 +106,4 @@ public
 # Firebase
 service-account-key.json
 .firebase/
+.DS_Store
