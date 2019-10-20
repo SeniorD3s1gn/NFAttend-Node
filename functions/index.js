@@ -1,37 +1,22 @@
 const cors = require('cors');
 const express = require('express');
 const admin = require('firebase-admin');
-const routes = require('./routes');
 const serviceAccountKey = require('./service-account-key');
+const firebaseConfig = require('./firebase-config');
 const env = require('./environment-variables');
 const bodyParser = require('body-parser');
 const firebase = require('firebase/app');
 const functions = require('firebase-functions');
 
-// Create and Deploy Your First Cloud Functions
-// https://firebase.google.com/docs/functions/write-firebase-functions
-
-const KEY = env.apiKey;
-const FIREBASE_KEY = env.firebaseApiKey;
-const APP_ID = env.appId;
-
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccountKey),
-    databaseURL: 'https://attendanceov.firebaseio.com'
 });
 
-const firebaseConfig = {
-    apiKey: FIREBASE_KEY,
-    authDomain: "nfattend.firebaseapp.com",
-    databaseURL: "https://nfattend.firebaseio.com",
-    projectId: "nfattend",
-    storageBucket: "nfattend.appspot.com",
-    messagingSenderId: "550278693891",
-    appId: APP_ID,
-    measurementId: "G-JM5X97JKT8"
-};
-
 firebase.initializeApp(firebaseConfig);
+
+const routes = require('./routes');
+
+const KEY = env.apiKey;
 
 const app = express();
 
@@ -49,6 +34,7 @@ app.get('/api', (req, res) => {
 
 app.use('/api/users', routes.users);
 app.use('/api/auth', routes.auth);
+app.use('/api/courses', routes.courses);
 
 // app.listen(PORT, () =>
 //     console.log(`Attendance backend listening on port ${PORT}`),
