@@ -25,12 +25,14 @@ router.post('/', (req, res) => {
     createAuthenticatedUser(user).then((response) => {
         console.log('added new user to auth: ', response);
         if (user.faculty) {
-            insertAsFaculty(user).then((result) => {
+            insertAsFaculty({ ...user, id: response }).then((result) => {
                 console.log('added new faculty to firestore: ', result.id);
+                res.send({ message: 'ok', id: result.id });
             }).catch((err) => {
                 console.log('could not add new faculty to firestore: ', err);
+                res.send(err);
                 deleteUser(response).then((resolve) => {
-                    console.log('user has been delete: ', resolve);
+                    console.log('user has been deleted: ', resolve);
                 }).catch((reject) => {
                     console.log('user could not be deleted: ', reject);
                 });
@@ -39,10 +41,12 @@ router.post('/', (req, res) => {
             const student = { ...user, device: req.body.device };
             insertAsStudent(student).then((result) => {
                 console.log('add new student to firestore: ', result);
+                res.send(result.id);
             }).catch((err) => {
                 console.log('could not add new student to firestore: ', err);
+                res.send(err);
                 deleteUser(response).then((resolve) => {
-                    console.log('user has been delete: ', resolve);
+                    console.log('user has been deleted: ', resolve);
                 }).catch((reject) => {
                     console.log('user could not be deleted: ', reject);
                 });
@@ -50,13 +54,15 @@ router.post('/', (req, res) => {
         }
     }).catch((err) => {
         console.log('could not add new user to auth: ', err);
+        res.send(err);
     })
 });
 
 const createAuthenticatedUser = (user) => {
     return new Promise((resolve, reject) => {
         if (!shared.validateUser(user)) {
-            reject('One of the user values is null...')
+            reject('One of the user values is null...');
+            return;
         }
         admin.auth().createUser({
             displayName: user.first_name + ' ' + user.last_name,
@@ -74,6 +80,7 @@ const insertAsStudent = (student) => {
     return new Promise((resolve, reject) => {
        if (!shared.validateStudent(student)) {
            reject('One or more of the student values is blank');
+           return;
        }
        db.collection('students').doc(student.id).set({
           first_name: student.first_name,
@@ -92,8 +99,9 @@ const insertAsFaculty = (faculty) => {
     return new Promise((resolve, reject) => {
        if (!shared.validateUser(faculty)) {
            reject('One or more of the faculty values is blank');
+           return;
        }
-       db.collection('faculty').add({
+       db.collection('faculty').doc(faculty.id).set({
            first_name: faculty.first_name,
            last_name: faculty.last_name,
            email: faculty.email,
