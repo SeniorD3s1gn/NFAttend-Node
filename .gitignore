@@ -108,3 +108,4 @@ service-account-key.json
 .firebase/
 functions/firebase-config.json
 .DS_Store
+.firebase/hosting.cHVibGlj.cache

@@ -54,11 +54,14 @@ router.post('/', (req, res) => {
     const course = {
         name: req.body.name,
         number: req.body.number,
-        section: req.body.section
+        section: req.body.section,
+        professor: req.body.professor,
+        students: req.body.students,
     };
 
     insertCourse(course).then((response) => {
         console.log('successfully added course: ', response.id);
+        res.send({message: 'class successfully added'})
     }).catch((err) => {
         console.log('could not add course: ', err);
     });
@@ -70,7 +73,8 @@ const insertCourse = (course) => {
             name: course.name,
             number: course.number,
             section: course.section,
-            students: []
+            professor: course.professor,
+            students: [],
         }).then((ref) => {
             resolve(ref);
         }).catch((err) => {

@@ -15,13 +15,18 @@ router.post('/', (req, res) => {
     const password = req.body.password;
     firebase.auth().signInWithEmailAndPassword(email, password).then(() => {
         console.log('Signed in');
-        res.sendStatus(200);
+        const uid = firebase.auth().currentUser.uid;
+        res.send({ statusCode: 200, data: { uid } });
     }).catch((err) => {
         const errorCode = err.code;
         const errorMessage = err.message;
         console.log('Error: ', err);
         res.send({ errorCode, errorMessage });
-    })
+    });
 });
+
+const retrieveFaculty = () => {
+
+};
 
 module.exports = router;
