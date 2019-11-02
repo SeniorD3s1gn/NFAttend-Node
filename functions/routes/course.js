@@ -8,6 +8,21 @@ const db = admin.firestore();
 
 const router = Router();
 
+router.get('/:id', (req, res) => {
+    if (req.headers.secret !== KEY) {
+        res.sendStatus(401).end();
+    }
+    const id = req.params.id;
+    const coursesRef = db.collection('teachers').doc(id);
+    coursesRef.get().then((doc) => {
+        if (!doc.exists) {
+            const courses_ids = doc.get('courses');
+            console.log(courses_ids);
+            res.send(courses_ids);
+        }
+    })
+});
+
 router.get('/', (req, res) => {
     if (req.headers.secret !== KEY) {
         res.sendStatus(401).end();
@@ -62,6 +77,10 @@ const insertCourse = (course) => {
             reject(err);
         });
     });
+};
+
+const retrieveCourseData = () => {
+
 };
 
 module.exports = router;
