@@ -32,8 +32,7 @@ app.get('/api', (req, res) => {
     res.sendStatus(200);
 });
 
-// app.use('/api/users', routes.users);
-app.use('/api/auth', routes.auth);
+app.use('/api/users', routes.users);
 app.use('/api/courses', routes.courses);
 app.use('/api/students', routes.students);
 app.use('/api/faculty', routes.faculty);

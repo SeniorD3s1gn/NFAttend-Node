@@ -11,37 +11,17 @@ const router = Router();
 router.get('/:id', (req, res) => {
     if (req.headers.secret !== KEY) {
         res.sendStatus(401).end();
+        return;
     }
     const id = req.params.id;
     const coursesRef = db.collection('courses').doc(id);
     coursesRef.get().then((doc) => {
-        if (!doc.exists) {
+        if (doc.exists) {
             console.log(doc.data());
             res.send(doc.data());
         }
-    });
-});
-
-router.get('/', (req, res) => {
-    if (req.headers.secret !== KEY) {
-        res.sendStatus(401).end();
-    }
-    const id = req.headers.id;
-    if (!id) {
-        console.log('request was sent without a course id');
-        res.send({ error: 'Id passed is null.' });
-        return;
-    }
-    db.collection('courses').doc(id).get().then((doc) => {
-        if (doc.exists) {
-            res.send(doc.data());
-            console.log('sending document: ', doc.id);
-        } else {
-            console.log('Document doesn\'t exists');
-            res.sendStatus(404);
-        }
     }).catch((err) => {
-        console.log('Error getting document: ', err);
+        console.log(err);
         res.send(err);
     });
 });
@@ -98,8 +78,43 @@ const insertCourse = (course) => {
     });
 };
 
-const retrieveCourseData = () => {
-
+const retrieveCourseList = (req, res) => {
+    const facultyRef = db.collection('faculty').doc(req.params.id);
+    facultyRef.get().then((doc) => {
+        const courses = doc.get('courses');
+        let details = [];
+        courses.forEach((course) => {
+            retrieveCourse(course).then((data) => {
+                console.log(data);
+                const detail = {
+                    id: course,
+                    name: data.name,
+                    section: data.section,
+                    number: data.number,
+                };
+                details.push(detail);
+                if (details.length === courses.length) {
+                    res.send(details);
+                }
+            }).catch((err) => {
+                console.log(err);
+                res.send(err);
+            });
+        });
+    });
 };
 
-module.exports = router;
+const retrieveCourse = (id) => {
+    return new Promise((resolve, reject) => {
+        db.collection('courses').doc(id).get().then((doc) => {
+            resolve(doc.data());
+        }).catch((err) => {
+            reject(err);
+        });
+    });
+};
+
+module.exports = {
+    router,
+    retrieveCourseList,
+};
