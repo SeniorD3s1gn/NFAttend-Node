@@ -13,14 +13,13 @@ router.get('/:id', (req, res) => {
         res.sendStatus(401).end();
     }
     const id = req.params.id;
-    const coursesRef = db.collection('teachers').doc(id);
+    const coursesRef = db.collection('courses').doc(id);
     coursesRef.get().then((doc) => {
         if (!doc.exists) {
-            const courses_ids = doc.get('courses');
-            console.log(courses_ids);
-            res.send(courses_ids);
+            console.log(doc.data());
+            res.send(doc.data());
         }
-    })
+    });
 });
 
 router.get('/', (req, res) => {
@@ -51,12 +50,28 @@ router.post('/', (req, res) => {
     if (req.headers.secret !== KEY) {
         res.sendStatus(401).end();
     }
+
+    const students = req.body.students.split(',');
+    let formatted = [];
+    students.forEach(student => {
+        student = student//.replace(/[{}]/g, '')
+            .replace(/[[\]]/g, '')
+            .replace(/(?:\\[rn])+/g, '').trim();
+        const json = JSON.parse(student);
+        for (let key in json) {
+            if (json.hasOwnProperty(key)) {
+                let value = json[key];
+                formatted.push({key, value});
+            }
+        }
+    });
+
     const course = {
         name: req.body.name,
         number: req.body.number,
         section: req.body.section,
         professor: req.body.professor,
-        students: req.body.students,
+        students: formatted,
     };
 
     insertCourse(course).then((response) => {
@@ -74,7 +89,7 @@ const insertCourse = (course) => {
             number: course.number,
             section: course.section,
             professor: course.professor,
-            students: [],
+            students: course.students,
         }).then((ref) => {
             resolve(ref);
         }).catch((err) => {

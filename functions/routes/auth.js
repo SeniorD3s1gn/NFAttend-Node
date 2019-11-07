@@ -16,12 +16,12 @@ router.post('/', (req, res) => {
     firebase.auth().signInWithEmailAndPassword(email, password).then(() => {
         console.log('Signed in');
         const uid = firebase.auth().currentUser.uid;
-        res.send({ statusCode: 200, data: { uid } });
+        res.send({id: uid});
     }).catch((err) => {
         const errorCode = err.code;
         const errorMessage = err.message;
         console.log('Error: ', err);
-        res.send({ errorCode, errorMessage });
+        res.send({ errorCode, errorMessage, id: undefined });
     });
 });
 
