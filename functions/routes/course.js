@@ -34,7 +34,7 @@ router.post('/', (req, res) => {
 
     const students = req.body.students.split(',');
     let formatted = [];
-    if (!students) {
+    if (req.body.students) {
         students.forEach(student => {
             student = student//.replace(/[{}]/g, '')
                 .replace(/[[\]]/g, '')
