@@ -11,10 +11,12 @@ const db = admin.firestore();
 
 router.post('/', (req, res) => {
     if (req.headers.secret !== KEY) {
-        res.sendStatus(401).end();
+        res.sendStatus(401);
+        return;
     }
 
     const user = {
+        id: req.body.id,
         first_name: req.body.first_name,
         last_name: req.body.last_name,
         email: req.body.email,
@@ -25,12 +27,13 @@ router.post('/', (req, res) => {
     createAuthenticatedUser(user).then((response) => {
         console.log('added new user to auth: ', response);
         if (user.faculty) {
+            console.log('creating faculty');
             insertAsFaculty({ ...user, id: response }).then((result) => {
                 console.log('added new faculty to firestore: ', result.id);
-                res.send({ message: 'ok', id: result.id });
+                res.send({ id: result });
             }).catch((err) => {
                 console.log('could not add new faculty to firestore: ', err);
-                res.send(err);
+                res.send({ err });
                 deleteUser(response).then((resolve) => {
                     console.log('user has been deleted: ', resolve);
                 }).catch((reject) => {
@@ -38,13 +41,14 @@ router.post('/', (req, res) => {
                 });
             });
         } else {
-            const student = { ...user, device: req.body.device };
+            console.log('creating student');
+            const student = { ...user, id: req.body.id, device: req.body.device };
             insertAsStudent(student).then((result) => {
                 console.log('add new student to firestore: ', result);
-                res.send(result.id);
+                res.send({ id: result });
             }).catch((err) => {
                 console.log('could not add new student to firestore: ', err);
-                res.send(err);
+                res.send({ err });
                 deleteUser(response).then((resolve) => {
                     console.log('user has been deleted: ', resolve);
                 }).catch((reject) => {
@@ -64,11 +68,25 @@ const createAuthenticatedUser = (user) => {
             reject('One of the user values is null...');
             return;
         }
-        admin.auth().createUser({
-            displayName: user.first_name + ' ' + user.last_name,
-            email: user.email,
-            password: user.password,
-        }).then((record) => {
+
+        let userX;
+        if (!user.faculty) {
+            userX = {
+                uid: user.id,
+                displayName: user.first_name + ' ' + user.last_name,
+                email: user.email,
+                password: user.password,
+            }
+        } else {
+            userX = {
+                displayName: user.first_name + ' ' + user.last_name,
+                email: user.email,
+                password: user.password,
+            }
+        }
+
+        admin.auth().createUser(userX).then((record) => {
+            console.log(userX.uid);
             resolve(record.uid);
         }).catch((err) => {
             reject(err);
@@ -105,8 +123,8 @@ const insertAsFaculty = (faculty) => {
            first_name: faculty.first_name,
            last_name: faculty.last_name,
            email: faculty.email,
-       }).then((ref) => {
-           resolve(ref);
+       }).then(() => {
+           resolve(faculty.id);
        }).catch((err) => {
            reject(err);
        })

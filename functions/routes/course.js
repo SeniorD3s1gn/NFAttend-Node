@@ -28,37 +28,45 @@ router.get('/:id', (req, res) => {
 
 router.post('/', (req, res) => {
     if (req.headers.secret !== KEY) {
-        res.sendStatus(401).end();
+        res.sendStatus(401);
+        return;
     }
 
     const students = req.body.students.split(',');
     let formatted = [];
-    students.forEach(student => {
-        student = student//.replace(/[{}]/g, '')
-            .replace(/[[\]]/g, '')
-            .replace(/(?:\\[rn])+/g, '').trim();
-        const json = JSON.parse(student);
-        for (let key in json) {
-            if (json.hasOwnProperty(key)) {
-                let value = json[key];
-                formatted.push({key, value});
+    if (!students) {
+        students.forEach(student => {
+            student = student//.replace(/[{}]/g, '')
+                .replace(/[[\]]/g, '')
+                .replace(/(?:\\[rn])+/g, '').trim();
+            const json = JSON.parse(student);
+            for (let key in json) {
+                if (json.hasOwnProperty(key)) {
+                    let value = json[key];
+                    formatted.push({key, value});
+                }
             }
-        }
-    });
+        });
+    }
 
     const course = {
         name: req.body.name,
         number: req.body.number,
         section: req.body.section,
+        type: req.body.type,
+        dates: req.body.dates.split(','),
+        times: req.body.times.split('-'),
+        location: req.body.location,
         professor: req.body.professor,
         students: formatted,
     };
 
     insertCourse(course).then((response) => {
         console.log('successfully added course: ', response.id);
-        res.send({message: 'class successfully added'})
+        res.send({ message: 'successfully added course' });
     }).catch((err) => {
         console.log('could not add course: ', err);
+        res.send(err);
     });
 });
 
@@ -68,53 +76,37 @@ const insertCourse = (course) => {
             name: course.name,
             number: course.number,
             section: course.section,
+            type: course.type,
+            dates: course.dates,
+            times: course.times,
+            location: course.location,
             professor: course.professor,
             students: course.students,
         }).then((ref) => {
-            resolve(ref);
-        }).catch((err) => {
-            reject(err);
-        });
-    });
-};
-
-const retrieveCourseList = (req, res) => {
-    const facultyRef = db.collection('faculty').doc(req.params.id);
-    facultyRef.get().then((doc) => {
-        const courses = doc.get('courses');
-        let details = [];
-        courses.forEach((course) => {
-            retrieveCourse(course).then((data) => {
-                console.log(data);
-                const detail = {
-                    id: course,
-                    name: data.name,
-                    section: data.section,
-                    number: data.number,
-                };
-                details.push(detail);
-                if (details.length === courses.length) {
-                    res.send(details);
-                }
+            updateFaculty(course.professor.trim(), ref.id).then(() => {
+                resolve(ref);
             }).catch((err) => {
-                console.log(err);
-                res.send(err);
-            });
-        });
-    });
-};
-
-const retrieveCourse = (id) => {
-    return new Promise((resolve, reject) => {
-        db.collection('courses').doc(id).get().then((doc) => {
-            resolve(doc.data());
+                reject(err);
+            })
         }).catch((err) => {
             reject(err);
         });
     });
 };
 
-module.exports = {
-    router,
-    retrieveCourseList,
+const updateFaculty = (faculty, course) => {
+    return new Promise((resolve, reject) => {
+        const facultyRef = db.collection('faculty').doc(faculty);
+        facultyRef.update({
+            courses: admin.firestore.FieldValue.arrayUnion(course)
+        }).then(() => {
+            console.log('added course to professor document');
+            resolve();
+        }).catch((err) => {
+            console.log(err);
+            reject(err);
+        });
+    });
 };
+
+module.exports = router;

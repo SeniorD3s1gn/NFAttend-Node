@@ -27,11 +27,13 @@ app.use(cors());
 
 app.get('/api', (req, res) => {
     if (req.headers.secret !== KEY) {
-        res.sendStatus(401).end();
+        res.sendStatus(401);
+        return;
     }
     res.sendStatus(200);
 });
 
+app.use('/api/auth', routes.auth);
 app.use('/api/users', routes.users);
 app.use('/api/courses', routes.courses);
 app.use('/api/students', routes.students);

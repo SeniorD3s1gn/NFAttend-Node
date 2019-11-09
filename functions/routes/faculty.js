@@ -1,7 +1,7 @@
 const Router = require('express');
 const env = require('../environment-variables');
 const auth = require('./auth');
-const {retrieveCourseList} = require("./course");
+const dataManager = require("../database/database-manager");
 
 const KEY = env.apiKey;
 
@@ -15,7 +15,7 @@ router.get('/:id', (req, res) => {
     const data = req.headers.data;
     switch (data) {
         case 'courses':
-            retrieveCourseList(req, res);
+            dataManager.retrieveCourseList(req, res);
             break;
         case 'students':
             break;
@@ -30,11 +30,6 @@ router.post('/auth', (req, res) => {
     }
     const email = req.body.email;
     const password = req.body.password;
-    const faculty = req.body.faculty;
-    if (!faculty) {
-        res.send({ errorCode: 401, errorMessage: 'cannot log in as a student from this device.' });
-        return;
-    }
     auth(email, password, res);
 });
 
