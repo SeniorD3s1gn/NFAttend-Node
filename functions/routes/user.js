@@ -96,38 +96,39 @@ const createAuthenticatedUser = (user) => {
 
 const insertAsStudent = (student) => {
     return new Promise((resolve, reject) => {
-       if (!shared.validateStudent(student)) {
-           reject('One or more of the student values is blank');
-           return;
-       }
-       db.collection('students').doc(student.id).set({
-          first_name: student.first_name,
-          last_name: student.last_name,
-          email: student.email,
-          device: student.device,
-       }).then(() => {
-           resolve(student.id);
-       }).catch((err) => {
-           reject(err);
-       });
+        if (!shared.validateStudent(student)) {
+            reject('One or more of the student values is blank');
+            return;
+        }
+        db.collection('students').doc(student.id).set({
+            first_name: student.first_name,
+            last_name: student.last_name,
+            email: student.email,
+            device: student.device,
+            student: []
+        }).then(() => {
+            resolve(student.id);
+        }).catch((err) => {
+            reject(err);
+        });
     });
 };
 
 const insertAsFaculty = (faculty) => {
     return new Promise((resolve, reject) => {
-       if (!shared.validateUser(faculty)) {
-           reject('One or more of the faculty values is blank');
-           return;
-       }
-       db.collection('faculty').doc(faculty.id).set({
-           first_name: faculty.first_name,
-           last_name: faculty.last_name,
-           email: faculty.email,
-       }).then(() => {
-           resolve(faculty.id);
-       }).catch((err) => {
-           reject(err);
-       })
+        if (!shared.validateUser(faculty)) {
+            reject('One or more of the faculty values is blank');
+            return;
+        }
+        db.collection('faculty').doc(faculty.id).set({
+            first_name: faculty.first_name,
+            last_name: faculty.last_name,
+            email: faculty.email,
+        }).then(() => {
+            resolve(faculty.id);
+        }).catch((err) => {
+            reject(err);
+        })
     });
 };
 
@@ -158,18 +159,18 @@ router.delete('/:email', (req, res) => {
     if (req.headers.secret !== KEY) {
         res.sendStatus(401).end();
     }
-   admin.auth().getUserByEmail(req.params.email).then((record) => {
-       admin.auth().deleteUser(record.uid).then(() => {
-           console.log('Successfully deleted user: ', record.uid);
-           res.sendStatus(202);
-       }).catch((err) => {
-           console.log('Error deleting user: ', err);
-           res.sendStatus(400);
-       });
-   }).catch((err) => {
+    admin.auth().getUserByEmail(req.params.email).then((record) => {
+        admin.auth().deleteUser(record.uid).then(() => {
+            console.log('Successfully deleted user: ', record.uid);
+            res.sendStatus(202);
+        }).catch((err) => {
+            console.log('Error deleting user: ', err);
+            res.sendStatus(400);
+        });
+    }).catch((err) => {
         console.log('Error fetching user data: ', err);
         res.sendStatus(404);
-   });
+    });
 });
 
 module.exports = router;

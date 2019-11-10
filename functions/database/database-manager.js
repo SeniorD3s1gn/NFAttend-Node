@@ -1,9 +1,9 @@
 const admin = require('firebase-admin');
 const db = admin.firestore();
 
-retrieveCourseList = (id) => {
+retrieveCourseList = (id, collection) => {
     return new Promise((resolve, reject) => {
-        const facultyRef = db.collection('faculty').doc(id);
+        const facultyRef = db.collection(collection).doc(id);
         facultyRef.get().then((doc) => {
             const courses = doc.get('courses');
             if (!courses) {
@@ -14,13 +14,28 @@ retrieveCourseList = (id) => {
             let details = [];
             courses.map((course) => {
                 retrieveCourse(course).then((data) => {
-                    console.log(data);
-                    const detail = {
-                        id: course,
-                        name: data.name,
-                        section: data.section,
-                        number: data.number,
-                    };
+                    let detail;
+                    if (collection === 'faculty') {
+                        detail = {
+                            id: course,
+                            name: data.name,
+                            section: data.section,
+                            number: data.number,
+                        };
+                    } else {
+                        detail = {
+                            id: course,
+                            name: data.name,
+                            section: data.section,
+                            number: data.number,
+                            professor: data.professor,
+                            type: data.type,
+                            times: data.times,
+                            dates: data.dates,
+                            location: data.location,
+                        }
+                    }
+                    detail = JSON.parse(JSON.stringify(detail).replace(/(?:\\[rn])+/g, ''));
                     details.push(detail);
                     if (details.length === courses.length) {
                         resolve(details);
@@ -39,8 +54,8 @@ retrieveCourseList = (id) => {
 const retrieveCourse = (id) => {
     return new Promise((resolve, reject) => {
         const coursesRef = db.collection('courses').doc(id);
-        coursesRef.get().then((data) => {
-            resolve(data.data());
+        coursesRef.get().then((doc) => {
+            resolve(doc.data());
         }).catch((err) => {
             reject(err);
         });
@@ -66,11 +81,11 @@ const retrieveFaculty = (id) => {
     return new Promise((resolve, reject) => {
         const facultyRef = db.collection('faculty').doc(id);
         facultyRef.get().then((doc) => {
-           if (doc.exists) {
-               resolve(doc.data())
-           } else {
-               reject('this teacher does not exists.');
-           }
+            if (doc.exists) {
+                resolve(doc.data())
+            } else {
+                reject('this teacher does not exists.');
+            }
         }).catch((err) => {
             reject(err);
         });
@@ -82,10 +97,20 @@ const updateCourses = (id) => {
         const coursesCol = db.collection('courses');
         coursesCol.get().then((snapshot) => {
             snapshot.docs.forEach((course) => {
-                if (containsStudent(id, course)) {
-                    if (updateStudent(id, course.id)) {
-                        console.log('added course ' + course.id + ' to student ' + id);
-                    }
+                const contains = containsStudent(id.trim(), course.data());
+                if (contains) {
+                    updateStudent(id, course.id).then((updated) => {
+                        if (updated) {
+                            console.log('updated course ' + course.id + ' for student ' + id);
+                            resolve(true);
+                        } else {
+                            console.log('did not added course to student');
+                            resolve(true);
+                        }
+                    }).catch((err) => {
+                        console.log(err);
+                        reject(err);
+                    });
                 }
             });
             resolve({ update: true });
@@ -97,37 +122,25 @@ const updateCourses = (id) => {
 
 const containsStudent = (id, course) => {
     const students = course.students;
+    let studentIds = [];
     students.forEach(student => {
-        for (let key in student) {
-            if (student.hasOwnProperty(key)) {
-                if (key === id) {
-                    return true;
-                }
-            }
+        if (student.key !== undefined) {
+            studentIds.push(student.key);
         }
     });
-    return false;
+    return studentIds.includes(id);
 };
 
 const updateStudent = (studentId, courseId) => {
     return new Promise((resolve, reject) => {
-       const studentRef = db.collection('students').doc(studentId);
-       studentRef.get().then((doc) => {
-           const courses = doc.data().courses;
-           if (!courses.contains(courseId)) {
-               studentRef.update({
-                   courses: admin.firestore.FieldValue.arrayUnion(courseId)
-               }).then(() => {
-                   resolve(true);
-               }).catch((err) => {
-                   reject(err);
-               });
-           } else {
-               resolve(true);
-           }
-       }).catch((err) => {
+        const studentRef = db.collection('students').doc(studentId);
+        studentRef.update({
+            courses: admin.firestore.FieldValue.arrayUnion(courseId)
+        }).then(() => {
+            resolve(true);
+        }).catch((err) => {
             reject(err);
-       });
+        });
     });
 };
 

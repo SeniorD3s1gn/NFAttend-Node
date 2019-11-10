@@ -14,20 +14,25 @@ router.get('/:id', (req, res) => {
 
     const data = req.headers.data;
     switch (data) {
-        case 'courses':
+        case 'update':
             dataManager.updateCourses(req.params.id).then((resolve) => {
                 if (resolve) {
-                    dataManager.retrieveCourseList(req.params.id).then((resolve) => {
-                        console.log('sending courses');
-                        res.send(resolve);
-                    }).catch((err) => {
-                        console.log('err: ', err);
-                        res.send(err);
-                    });
+                    res.send({message: 'students updated'});
+                } else {
+                    res.send({message: 'students not updated'});
                 }
             }).catch((reject) => {
                 console.log('err: ', reject);
-               res.send(reject);
+                res.send(reject);
+            });
+            break;
+        case 'courses':
+            dataManager.retrieveCourseList(req.params.id, 'students').then((resolve) => {
+                console.log('sending courses');
+                res.send(resolve);
+            }).catch((err) => {
+                console.log('err: ', err);
+                res.send(err);
             });
             break;
         case 'students':
