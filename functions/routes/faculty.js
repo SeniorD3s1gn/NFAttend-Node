@@ -15,11 +15,20 @@ router.get('/:id', (req, res) => {
     const data = req.headers.data;
     switch (data) {
         case 'courses':
-            dataManager.retrieveCourseList(req, res);
+            dataManager.retrieveCourseList(req.params.id).then((resolve) => {
+                res.send(resolve);
+            }).catch((reject) => {
+                res.send(reject);
+            });
             break;
         case 'students':
             break;
         default:
+            dataManager.retrieveFaculty(req.params.id).then((resolve) => {
+                res.send(resolve);
+            }).catch((reject) => {
+                res.send(reject);
+            });
             break;
     }
 });
