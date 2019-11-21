@@ -13,15 +13,11 @@ router.get('/:id', (req, res) => {
         res.sendStatus(401).end();
         return;
     }
+
     const id = req.params.id;
-    const coursesRef = db.collection('courses').doc(id);
-    coursesRef.get().then((doc) => {
-        if (doc.exists) {
-            console.log(doc.data());
-            res.send(doc.data());
-        }
+    retrieveCourse(id).then((data) => {
+        res.send(data);
     }).catch((err) => {
-        console.log(err);
         res.send(err);
     });
 });
@@ -32,9 +28,9 @@ router.post('/', (req, res) => {
         return;
     }
 
-    const students = req.body.students.split(',');
     let formatted = [];
     if (req.body.students) {
+        const students = req.body.students.split(',');
         students.forEach(student => {
             student = student//.replace(/[{}]/g, '')
                 .replace(/[[\]]/g, '')
@@ -70,6 +66,99 @@ router.post('/', (req, res) => {
     });
 });
 
+router.delete('/:id', (req, res) => {
+    if (req.headers.secret !== KEY) {
+        res.sendStatus(401);
+        return;
+    }
+
+    const id = req.params.id;
+    retrieveCourse(id).then((data) => {
+        const professor_id = data.professor;
+        const students = data.students;
+        const student_ids = [];
+        students.forEach(student => {
+            student_ids.push(student['key']);
+        });
+
+        removeCourseFromFaculty(professor_id, id).then((resolve) => {
+            console.log(resolve);
+            console.log('removed course for faculty');
+        }).catch((err) => {
+            console.log(err);
+        });
+        student_ids.forEach((s_id) => {
+            removeCourseFromStudent(s_id, id).then((_resolve) => {
+                console.log('removed course for student')
+            }).catch((err) => {
+                console.log(err);
+            })
+        });
+
+        deleteCourse(id).then((resolve) => {
+            res.send(resolve)
+        }).catch((err) => {
+            res.send(err);
+        });
+    }).catch((err) => {
+        res.send(err);
+    });
+
+});
+
+const retrieveCourse = (id) => {
+    return new Promise((resolve, reject) => {
+        const coursesRef = db.collection('courses').doc(id);
+        coursesRef.get().then((doc) => {
+            if (doc.exists) {
+                console.log(doc.data());
+                resolve(doc.data());
+            } else {
+                reject({ message: 'course not found' });
+            }
+        }).catch((err) => {
+            console.log(err);
+            reject(err);
+        });
+    });
+};
+
+const deleteCourse = (id) => {
+    return new Promise((resolve, reject) => {
+        db.collection('courses').doc(id).delete().then(() => {
+            resolve({ message: 'course deleted' });
+        }).catch((err) => {
+            reject(err);
+        });
+    });
+};
+
+const removeCourseFromStudent = (id, course_id) => {
+    return new Promise((resolve, reject) => {
+        const studentRef = db.collection('students').doc(id);
+        studentRef.update({
+            courses: admin.firestore.FieldValue.arrayRemove(course_id)
+        }).then((res) => {
+            resolve(res);
+        }).catch((err) => {
+            reject(err);
+        });
+    });
+};
+
+const removeCourseFromFaculty = (id, course_id) => {
+    return new Promise((resolve, reject) => {
+        const facultyRef = db.collection('faculty').doc(id);
+        facultyRef.update({
+            courses: admin.firestore.FieldValue.arrayRemove(course_id)
+        }).then((res) => {
+            resolve(res);
+        }).catch((err) => {
+            reject(err);
+        });
+    });
+};
+
 const insertCourse = (course) => {
     return new Promise((resolve, reject) => {
         db.collection('courses').add({
@@ -84,10 +173,11 @@ const insertCourse = (course) => {
             students: course.students,
         }).then((ref) => {
             updateFaculty(course.professor.trim(), ref.id).then(() => {
-                resolve(ref);
+                // resolve(ref);
             }).catch((err) => {
-                reject(err);
-            })
+                console.log(err);
+            });
+            resolve(ref);
         }).catch((err) => {
             reject(err);
         });
