@@ -38,6 +38,7 @@ app.use('/api/users', routes.users);
 app.use('/api/courses', routes.courses);
 app.use('/api/students', routes.students);
 app.use('/api/faculty', routes.faculty);
+app.use('/api/attend', routes.)
 
 // app.listen(PORT, () =>
 //     console.log(`Attendance backend listening on port ${PORT}`),
