@@ -1,20 +1,23 @@
+const fs = require('fs');
+const os = require('os');
 const Router = require('express');
 const env = require('../environment-variables');
-
 const router = Router();
-
+const dataFile = os.tmpdir() + '/data.json';
+console.log(dataFile);
 const KEY = env.apiKey;
 
-let sessions = [];
+let session = undefined;
+let messageId = 0;
 
-router.get('/session', (req, res) => {
+router.get('/', (req, res) => {
     if (req.headers.secret !== KEY) {
         res.sendStatus(401);
         return;
     }
 
-    if (req.headers.session === undefined || req.headers.timeout === undefined) {
-        res.send({ message: 'invalid headers' });
+    if (fs.existsSync(dataFile)) {
+        res.sendStatus(200);
         return;
     }
 
@@ -23,7 +26,43 @@ router.get('/session', (req, res) => {
         'Cache-Control': 'no-cache',
         'Connection': 'keep-alive'
     });
-    startSession(req, res);
+
+    res.write('\n');
+
+    session = {
+        id: req.headers.id,
+        timeout: req.headers.timeout,
+        students: []
+    };
+
+    fs.writeFileSync(dataFile, JSON.stringify(session), 'utf8');
+    console.log('session created');
+
+    const intervalId = setInterval(() => {
+        if (fs.existsSync(dataFile)) {
+            session = JSON.parse(fs.readFileSync(dataFile, 'utf8'));
+        }
+        if (messageId > session.timeout) {
+            clearInterval(intervalId);
+            fs.unlinkSync(dataFile);
+            res.write('session ended');
+            res.end();
+            console.log('session ended');
+            return;
+        }
+        if (session.students.length > 0) {
+            const student = session.students.pop();
+            res.write(`${ student }`);
+            res.write('\n');
+            console.log('student: ', student);
+            fs.writeFileSync(dataFile, JSON.stringify(session), 'utf8');
+        }
+        // res.write(`id: ${messageId}\n`);
+        // res.write(`data: Test Message -- ${Date.now()}\n\n`);
+        // res.write(`data: Student -- ${id}\n\n`);
+        messageId += 2;
+        // console.log(messageId);
+    }, 2000);
 });
 
 router.post('/', (req, res) => {
@@ -31,74 +70,22 @@ router.post('/', (req, res) => {
         res.sendStatus(401);
         return;
     }
-    let sessionId = req.headers.sessionId;
-    if (sessionId !== this.sessionId) {
-        res.sendStatus(404);
+
+    if (fs.existsSync(dataFile)) {
+        session = JSON.parse(fs.readFileSync(dataFile, 'utf8'));
     }
-    let id = req.body.id;
-    addStudentToSession(id, sessionId);
+
+
+    if (!session || !req.headers.session || req.headers.session !== session.id) {
+        res.send({ statusCode: 404, message: 'Session does not exists'  });
+        return;
+    }
+
+    session.students.push(req.headers.id);
+    console.log('joined session');
+
+    fs.writeFileSync(dataFile, JSON.stringify(session), 'utf8');
+    res.send({ statusCode: 200, message: 'added to session'});
 });
 
-const startSession = (req, res) => {
-    let session = {
-        id: req.headers.session,
-        time: 0,
-        timeout: req.headers.timeout,
-        students: [],
-    };
-    sessions.push(session);
-
-    const intervalId = setInterval(() => {
-
-        if (time === timeout) {
-            clearInterval(this);
-            res.end();
-        }
-    }, 1000);
-
-    req.on('close', () => {
-        clearInterval(intervalId);
-    });
-};
-
-const addStudentToSession = (studentId, sessionId) => {
-    sessions.forEach(session => {
-        if (session.id === sessionId) {
-            session.students.push(studentId);
-        }
-    })
-};
-
-const deleteSession = (sessionId) => {
-    for(let i = 0; i < sessions; i++) {
-        if (sessions[i].id === sessionId) {
-            sessions.splice(i, 1);
-            break;
-        }
-    }
-};
-
-const increment = (sessionId) => {
-    sessions.forEach(session => {
-       if (session.id === sessionId) {
-           return session;
-       }
-    });
-};
-
 module.exports = router;
-
-// function sseDemo(req, res) {
-//     let messageId = 0;
-//
-//     const intervalId = setInterval(() => {
-//         res.write(`id: ${messageId}\n`);
-//         res.write(`data: Test Message -- ${Date.now()}\n\n`);
-//         messageId += 1;
-//     }, 1000);
-//
-//     req.on('close', () => {
-//         clearInterval(intervalId);
-//     });
-// }
-

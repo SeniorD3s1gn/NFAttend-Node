@@ -109,3 +109,6 @@ service-account-key.json
 functions/firebase-config.json
 .DS_Store
 .firebase/hosting.cHVibGlj.cache
+
+# Data Folder
+/functions/data.json
