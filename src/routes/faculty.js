@@ -22,6 +22,7 @@ router.get('/:id', (req, res) => {
             });
             break;
         case 'students':
+            res.send({});
             break;
         default:
             dataManager.retrieveFaculty(req.params.id).then((resolve) => {
@@ -33,13 +34,13 @@ router.get('/:id', (req, res) => {
     }
 });
 
-router.post('/auth', (req, res) => {
-    if (req.headers.secret !== KEY) {
-        res.sendStatus(401).end();
-    }
-    const email = req.body.email;
-    const password = req.body.password;
-    auth(email, password, res);
-});
+// router.post('/auth', (req, res) => {
+//     if (req.headers.secret !== KEY) {
+//         res.sendStatus(401).end();
+//     }
+//     const email = req.body.email;
+//     const password = req.body.password;
+//     auth(email, password, res);
+// });
 
 module.exports = router;

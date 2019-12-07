@@ -1,9 +1,9 @@
 const fs = require('fs');
-const os = require('os');
+const path = require('path');
 const Router = require('express');
 const env = require('../environment-variables');
 const router = Router();
-const dataFile = os.tmpdir() + '/data.json';
+const dataFile = path.join(__dirname, 'data.json');
 console.log(dataFile);
 const KEY = env.apiKey;
 
@@ -13,11 +13,6 @@ let messageId = 0;
 router.get('/', (req, res) => {
     if (req.headers.secret !== KEY) {
         res.sendStatus(401);
-        return;
-    }
-
-    if (fs.existsSync(dataFile)) {
-        res.sendStatus(200);
         return;
     }
 
@@ -45,6 +40,7 @@ router.get('/', (req, res) => {
         if (messageId > session.timeout) {
             clearInterval(intervalId);
             fs.unlinkSync(dataFile);
+            messageId = 0;
             res.write('session ended');
             res.end();
             console.log('session ended');
@@ -57,11 +53,7 @@ router.get('/', (req, res) => {
             console.log('student: ', student);
             fs.writeFileSync(dataFile, JSON.stringify(session), 'utf8');
         }
-        // res.write(`id: ${messageId}\n`);
-        // res.write(`data: Test Message -- ${Date.now()}\n\n`);
-        // res.write(`data: Student -- ${id}\n\n`);
         messageId += 2;
-        // console.log(messageId);
     }, 2000);
 });
 

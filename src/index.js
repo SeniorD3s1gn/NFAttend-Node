@@ -6,7 +6,6 @@ const firebaseConfig = require('./firebase-config');
 const env = require('./environment-variables');
 const bodyParser = require('body-parser');
 const firebase = require('firebase/app');
-const functions = require('firebase-functions');
 
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccountKey),
@@ -39,9 +38,8 @@ app.use('/api/courses', routes.courses);
 app.use('/api/students', routes.students);
 app.use('/api/faculty', routes.faculty);
 app.use('/api/attend', routes.attend);
+app.use('/api/records', routes.records);
 
-// app.listen(PORT, () =>
-//     console.log(`Attendance backend listening on port ${PORT}`),
-// );
-
-exports.app = functions.https.onRequest(app);
+app.listen(3000, () =>
+    console.log(`Attendance backend listening on port ${3000}`),
+);

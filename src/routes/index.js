@@ -4,6 +4,7 @@ const students = require('./students');
 const faculty = require('./faculty');
 const auth = require('./auth');
 const attend = require('./attend');
+const records = require('./records');
 
 module.exports = {
     auth,
@@ -11,5 +12,6 @@ module.exports = {
     courses,
     students,
     faculty,
-    attend
+    attend,
+    records,
 };

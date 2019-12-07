@@ -144,9 +144,40 @@ const updateStudent = (studentId, courseId) => {
     });
 };
 
+const retrieveRecord = (recordId) => {
+    return new Promise((resolve, reject) => {
+        const recordRef = db.collection('records').doc(recordId);
+        recordRef.get().then(doc => {
+            if (!doc.exists) {
+                reject({ statusCode: 404 });
+            } else {
+                resolve(doc.data());
+            }
+        }).catch(err => {
+            reject(err);
+        })
+    });
+};
+
+const createRecord = (record) => {
+    return new Promise((resolve, reject) => {
+        db.collection('records').add({
+            course: record.course,
+            timestamp: record.timestamp,
+            students: record.students
+        }).then(ref => {
+            resolve(ref);
+        }).catch(err => {
+            reject(err);
+        })
+    });
+};
+
 module.exports = {
     retrieveCourseList,
     retrieveStudent,
     retrieveFaculty,
-    updateCourses
+    updateCourses,
+    retrieveRecord,
+    createRecord
 };
